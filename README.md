@@ -165,7 +165,3 @@ This project is licensed under the [MIT License](LICENSE).
 
 Happy coding!
 ```
-
----
-
-This README is designed to be clean, user-friendly, and comprehensive. Customize the repository URL, GitHub username, and any additional instructions as needed for your specific project. Enjoy building your WebRTC Video Chat Platform!
