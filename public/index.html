@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Secure Video Chat</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: #f0f2f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #2c3e50;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #f0f2f5;
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: #2563eb;
+        }
+
+        .control-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .control-button.off {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .control-button.off:hover {
+            background-color: #dc2626;
+        }
+
+        .control-button.end-call {
+            background-color: #ef4444;
+            display: none;
+        }
+
+        .control-button.end-call:hover {
+            background-color: #dc2626;
+        }
+
+        .control-button i {
+            font-size: 16px;
+        }
+
+        .choose-username {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            background: #3b82f6;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .choose-username:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .video-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .video-wrapper {
+            background: #2c3e50;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-wrapper h3 {
+            color: #f0f2f5;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .media-indicators {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 12px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .media-indicator {
+            color: #22c55e;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
+
+        .media-indicator.off {
+            color: #ef4444;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #userList {
+            background: #2c3e50;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        #userList h3 {
+            color: #f0f2f5;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            margin-bottom: 12px;
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .user-item:hover {
+            transform: translateX(4px);
+            background-color: #374151;
+        }
+
+        .user-item span {
+            font-size: 16px;
+            color: #f0f2f5;
+            font-weight: 500;
+        }
+
+        .call-button {
+            padding: 10px 20px;
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .call-button:hover:not(:disabled) {
+            background-color: #16a34a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .call-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .call-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2c3e50;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            backdrop-filter: blur(8px);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .call-notification.removing {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .call-notification p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #f0f2f5;
+            font-weight: 500;
+        }
+
+        .call-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .accept-call, .reject-call {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .accept-call {
+            background-color: #22c55e;
+            color: white;
+        }
+
+        .accept-call:hover {
+            background-color: #16a34a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .reject-call {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .reject-call:hover {
+            background-color: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-container {
+            background: #2c3e50;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 24px;
+        }
+
+        .chat-container h3 {
+            color: #f0f2f5;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: #4b5563 #1a1a1a;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+
+        .chat-messages p {
+            margin: 8px 0;
+            color: #f0f2f5;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 8px 12px;
+            background: #374151;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .chat-messages p.local-message {
+            margin-left: auto;
+            background: #3b82f6;
+            font-weight: bold;
+        }
+
+        .chat-messages p.remote-message {
+            margin-right: auto;
+            background: #374151;
+            font-weight: bold;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 12px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #1a1a1a;
+            color: #f0f2f5;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+
+        .chat-input button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: #3b82f6;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-input button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-input button i {
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .video-container {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-button, .choose-username {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .chat-messages {
+                height: 200px;
+            }
+
+            .chat-input {
+                flex-direction: column;
+            }
+
+            .chat-input button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WebRTC Secure Video Chat</h1>
+            <div class="controls">
+                <button id="toggleCamera" class="control-button">
+                    <i class="fas fa-video"></i>
+                    Camera On
+                </button>
+                <button id="switchCamera" class="control-button">
+                    <i class="fas fa-sync"></i>
+                    Switch Camera
+                </button>
+                <button id="toggleMic" class="control-button">
+                    <i class="fas fa-microphone"></i>
+                    Mic On
+                </button>
+                <button id="endCall" class="control-button end-call">
+                    <i class="fas fa-phone-slash"></i>
+                    End Call
+                </button>
+                <button id="chooseUsername" class="choose-username">
+                    <i class="fas fa-user"></i>
+                    Choose Username
+                </button>
+            </div>
+        </div>
+
+        <div class="video-container">
+            <div class="video-wrapper">
+                <h3 id="localVideoTitle">You</h3>
+                <video id="localVideo" autoplay muted playsinline></video>
+            </div>
+            <div class="video-wrapper">
+                <h3 id="remoteVideoTitle">Other</h3>
+                <div class="media-indicators" id="remoteMediaStatus" style="display: none;">
+                    <span class="media-indicator" id="remoteVideoStatus">
+                        <i class="fas fa-video"></i>
+                    </span>
+                    <span class="media-indicator" id="remoteAudioStatus">
+                        <i class="fas fa-microphone"></i>
+                    </span>
+                </div>
+                <video id="remoteVideo" autoplay playsinline></video>
+            </div>
+        </div>
+
+        <div id="userList">
+            <h3>Connected Users</h3>
+        </div>
+
+        <div class="chat-container">
+            <h3>Chat</h3>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Type your message...">
+                <button id="sendMessage">
+                    <i class="fas fa-paper-plane"></i>
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/client.js"></script>
+</body>
+</html>
