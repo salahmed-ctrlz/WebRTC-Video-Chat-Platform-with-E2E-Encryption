@@ -24,7 +24,6 @@ A secure video chat application built with WebRTC that supports both one-to-one 
 ## Features
 
 - **Secure Video Calls:** Utilizes WebRTC for real-time communication.
-- **Private Rooms:** Create and join private rooms for group calls.
 - **End-to-End Encryption:** Implements secure signaling using JSON Web Tokens (JWT) and ECDH key exchange.
 - **User-Friendly Interface:** Intuitive controls for toggling video/audio and managing calls.
 - **Scalable Architecture:** Easily extendable to support additional features.
