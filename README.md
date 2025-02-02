@@ -166,7 +166,3 @@ This project is licensed under the [MIT License](LICENSE).
 
 Happy coding!
 ```
-
----
-
-This README is designed to be both informative and visually appealing. It provides clear instructions on installation, usage, and contribution while also explaining how to use Ngrok to expose your local server for external access. Adjust any details as needed to fit your project specifics.
